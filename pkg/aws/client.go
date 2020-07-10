@@ -12,6 +12,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/aws/aws-sdk-go/service/sts/stsiface"
+
+	"github.com/aws/aws-sdk-go/service/rds"
+	"github.com/aws/aws-sdk-go/service/rds/rdsiface"
 )
 
 //go:generate mockgen -source=./client.go -destination=../mock/client_generated.go -package=mock
@@ -33,12 +36,18 @@ type Client interface {
 	ListBuckets(*s3.ListBucketsInput) (*s3.ListBucketsOutput, error)
 	DeleteBucket(*s3.DeleteBucketInput) (*s3.DeleteBucketOutput, error)
 	BatchDeleteBucketObjects(bucketName *string) error
+
+	//RDS
+	DescribeDBInstances(*rds.DescribeDBInstancesInput) (*rds.DescribeDBInstancesOutput, error)
+	DeleteDBInstance(*rds.DeleteDBInstanceInput) (*rds.DeleteDBInstanceOutput, error)
+	DescribeDBClusters(*rds.DescribeDBClustersInput) (*rds.DescribeDBClustersOutput, error)
 }
 
 type awsClient struct {
 	ec2Client ec2iface.EC2API
 	stsClient stsiface.STSAPI
 	s3Client  s3iface.S3API
+	rdsClient rdsiface.RDSAPI
 }
 
 func (c *awsClient) DescribeInstanceStatus(input *ec2.DescribeInstanceStatusInput) (*ec2.DescribeInstanceStatusOutput, error) {
@@ -87,6 +96,17 @@ func (c *awsClient) BatchDeleteBucketObjects(bucketName *string) error {
 	return s3manager.NewBatchDeleteWithClient(c.s3Client).Delete(aws.BackgroundContext(), iter)
 }
 
+//RDS
+func (c *awsClient) DescribeDBInstances(input *rds.DescribeDBInstancesInput) (*rds.DescribeDBInstancesOutput, error) {
+	return c.rdsClient.DescribeDBInstances(input)
+}
+func (c *awsClient) DeleteDBInstance(input *rds.DeleteDBInstanceInput) (*rds.DeleteDBInstanceOutput, error) {
+	return c.rdsClient.DeleteDBInstance(input)
+}
+func (c *awsClient) DescribeDBClusters(input *rds.DescribeDBClustersInput) (*rds.DescribeDBClustersOutput, error) {
+	return c.rdsClient.DescribeDBClusters(input)
+}
+
 // NewClient creates our client wrapper object for the actual AWS clients we use.
 func NewClient(awsAccessID, awsAccessSecret, token, region string) (Client, error) {
 	awsConfig := &aws.Config{Region: aws.String(region)}
@@ -102,5 +122,6 @@ func NewClient(awsAccessID, awsAccessSecret, token, region string) (Client, erro
 		ec2Client: ec2.New(s),
 		stsClient: sts.New(s),
 		s3Client:  s3.New(s),
+		rdsClient: rds.New(s),
 	}, nil
 }
