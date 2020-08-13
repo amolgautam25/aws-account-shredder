@@ -1,0 +1,17 @@
+{
+  "apiVersion": "aws.managed.openshift.io/v1alpha1",
+  "kind": "Account",
+  "metadata": {
+    "name": "test29",
+    "namespace": "aws-account-operator"
+  },
+  "spec": {
+    "awsAccountID": "300803735714",
+    "claimLink": "",
+    "iamUserSecret": "",
+    "legalEntity": {
+      "id": "",
+      "name": ""
+    }
+  }
+}
